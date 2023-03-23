@@ -1,6 +1,16 @@
 HELP.md
 .gradle
+.env
+.github
+/db/**
+docker-compose.yml
+**/src/main/resources/data.sql
+**/src/main/resources/firebasekey.json
+.DS_Store
+
 build/
+build/generated/querydsl
+
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
