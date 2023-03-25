@@ -3,6 +3,7 @@ package gdsc.skhu.liferary.service;
 import gdsc.skhu.liferary.domain.DTO.ImageDTO;
 import gdsc.skhu.liferary.domain.DTO.StudyDTO;
 import gdsc.skhu.liferary.domain.MainPost;
+import gdsc.skhu.liferary.domain.Member;
 import gdsc.skhu.liferary.domain.Study;
 import gdsc.skhu.liferary.repository.mainpost.MainPostRepository;
 import gdsc.skhu.liferary.repository.MemberRepository;
@@ -16,7 +17,6 @@ import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -33,7 +33,6 @@ public class StudyService {
     private final ImageService imageService;
 
     // Create
-    @Transactional
     public StudyDTO.Response save(String username, StudyDTO.Request request) throws IOException {
         MainPost mainPost = mainPostRepository.findById(request.getMainPostId())
                 .orElseThrow(() -> new NoSuchElementException("Main post not found"));
@@ -55,15 +54,42 @@ public class StudyService {
     // Read
     @Transactional(readOnly = true)
     public Page<StudyDTO.Response> findAll(Pageable pageable) {
-        return studyRepository.findAll(pageable).map(StudyDTO.Response::new);
+        return studyRepository.findAll(pageable).map(study -> {
+            if(study.getImages() != null) {
+                study.getImages().replaceAll(
+                        storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath()
+                );
+            }
+            return study;
+        }).map(StudyDTO.Response::new);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public StudyDTO.Response findByMainPost(Long mainPostId) {
         MainPost mainPost = mainPostRepository.findById(mainPostId)
                 .orElseThrow(() -> new NoSuchElementException("Main post not found"));
-        return new StudyDTO.Response(studyRepository.findByMainPost(mainPost)
-                .orElseThrow(() -> new NoSuchElementException("Study not found")));
+        return new StudyDTO.Response(studyRepository.findByMainPost(mainPost).map(study -> {
+            if(study.getImages() != null) {
+                study.getImages().replaceAll(
+                        storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath()
+                );
+            }
+            return study;
+        }).orElseThrow(() -> new NoSuchElementException("Study not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StudyDTO.Response> findByMember(Pageable pageable, String username) {
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new NoSuchElementException("Member not found"));
+        return studyRepository.findByAuthor(pageable, member).map(study -> {
+            if(study.getImages() != null) {
+                study.getImages().replaceAll(
+                        storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath()
+                );
+            }
+            return study;
+        }).map(StudyDTO.Response::new);
     }
 
     // Update
@@ -87,7 +113,7 @@ public class StudyService {
             throw new AuthorizationServiceException("Unauthorized access");
         }
         saveWithImage(newStudy, update.getImages());
-        return this.findByMainPost(mainPostId);
+        return new StudyDTO.Response(newStudy);
     }
 
     // Delete
@@ -118,7 +144,7 @@ public class StudyService {
                 study.getImages().add(image.getStoredImageName());
             }
         }
-        studyRepository.save(study);
+        studyRepository.saveAndFlush(study);
         if(study.getImages() != null) {
             study.getImages().replaceAll(storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath());
         }
