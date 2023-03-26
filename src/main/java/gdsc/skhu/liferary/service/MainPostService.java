@@ -3,6 +3,7 @@ package gdsc.skhu.liferary.service;
 import gdsc.skhu.liferary.domain.Category;
 import gdsc.skhu.liferary.domain.DTO.ImageDTO;
 import gdsc.skhu.liferary.domain.DTO.MainPostDTO;
+import gdsc.skhu.liferary.domain.Image;
 import gdsc.skhu.liferary.domain.MainPost;
 import gdsc.skhu.liferary.domain.Member;
 import gdsc.skhu.liferary.repository.mainpost.MainPostRepository;
@@ -61,7 +62,6 @@ public class MainPostService {
     @Transactional(readOnly = true)
     public MainPostDTO.Response findById(Long id) {
         return new MainPostDTO.Response(mainPostRepository.findById(id).map(mainPost -> {
-            System.out.println();
             if(mainPost.getImages() != null) {
                 mainPost.getImages().replaceAll(
                         storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath()
@@ -111,7 +111,6 @@ public class MainPostService {
     }
 
     // Update
-    @Transactional
     public MainPostDTO.Response update(String username, MainPostDTO.Update update, Long id) throws IOException {
         MainPost oldMainPost = mainPostRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("There is no Main Post with this ID"));
@@ -141,7 +140,8 @@ public class MainPostService {
                     .orElseThrow(() -> new NoSuchElementException("Main post not found"));
             if(mainPost.getImages() != null) {
                 for(String imageName : mainPost.getImages()) {
-                    imageService.deleteImage("main/", imageName);
+                    ImageDTO.Response image = imageService.findByStoredImageName(imageName);
+                    imageService.deleteImage("main/", image.getImagePath());
                 }
             }
             mainPostRepository.deleteById(id);

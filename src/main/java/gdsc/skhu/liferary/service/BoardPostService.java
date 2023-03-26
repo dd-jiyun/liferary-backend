@@ -116,7 +116,6 @@ public class BoardPostService {
     }
 
     // Update
-    @Transactional
     public BoardPostDTO.Response update(String username, BoardPostDTO.Update update, Long mainPostId, Long id) throws IOException {
         mainPostRepository.findById(mainPostId).orElseThrow(() -> new NoSuchElementException("Main post not found"));
         BoardPost oldBoardPost = boardPostRepository.findById(id)
@@ -147,7 +146,8 @@ public class BoardPostService {
                     .orElseThrow(() -> new NoSuchElementException("Board post not found"));
             if(boardPost.getImages() != null) {
                 for(String imageName : boardPost.getImages()) {
-                    imageService.deleteImage("board/", imageName);
+                    ImageDTO.Response image = imageService.findByStoredImageName(imageName);
+                    imageService.deleteImage("board/", image.getImagePath());
                 }
             }
             boardPostRepository.deleteById(id);

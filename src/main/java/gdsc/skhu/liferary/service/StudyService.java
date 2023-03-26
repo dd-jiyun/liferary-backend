@@ -93,7 +93,6 @@ public class StudyService {
     }
 
     // Update
-    @Transactional
     public StudyDTO.Response update(String username, StudyDTO.Update update, Long mainPostId) throws IOException {
         MainPost mainPost = mainPostRepository.findById(mainPostId)
                 .orElseThrow(() -> new NoSuchElementException("Main post not found"));
@@ -126,7 +125,8 @@ public class StudyService {
         try {
             if(study.getImages() != null) {
                 for(String imageName : study.getImages()) {
-                    imageService.deleteImage("path/", imageName);
+                    ImageDTO.Response image = imageService.findByStoredImageName(imageName);
+                    imageService.deleteImage("study/", image.getImagePath());
                 }
             }
             studyRepository.delete(study);
