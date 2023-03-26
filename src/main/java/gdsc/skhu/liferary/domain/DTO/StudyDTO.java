@@ -24,7 +24,7 @@ public class StudyDTO {
         @Schema(description = "Context", defaultValue = "Test study Context")
         private String context;
         @Schema(description = "Image files", defaultValue = "")
-        private List<MultipartFile> images;
+        private List<String> images;
     }
 
     @Getter
@@ -54,9 +54,8 @@ public class StudyDTO {
             this.author = study.getAuthor().getEmail();
             this.nickname = study.getAuthor().getNickname();
             this.context = study.getContext();
-            if(study.getImages() == null) {
-                this.images = new ArrayList<>();
-            } else {
+            this.images = new ArrayList<>();
+            if(study.getImages() != null) {
                 this.images = study.getImages();
             }
             this.modifiedDate = study.getModifiedDate();
@@ -75,6 +74,6 @@ public class StudyDTO {
         @Schema(description = "Context", defaultValue = "Modified Context")
         private String context;
         @Schema(description = "Image files", defaultValue = "")
-        private List<MultipartFile> images;
+        private List<String> images;
     }
 }

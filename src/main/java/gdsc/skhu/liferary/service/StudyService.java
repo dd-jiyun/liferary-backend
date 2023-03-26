@@ -17,8 +17,7 @@ import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.web.multipart.MultipartFile;
-
+import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,7 @@ public class StudyService {
     private final MemberRepository memberRepository;
     private final StudyRepository studyRepository;
     private final ImageService imageService;
+    private final EntityManager entityManager;
 
     // Create
     public StudyDTO.Response save(String username, StudyDTO.Request request) throws IOException {
@@ -48,7 +48,7 @@ public class StudyService {
                 .images(new ArrayList<>())
                 .build();
         saveWithImage(study, request.getImages());
-        return new StudyDTO.Response(studyRepository.save(study));
+        return new StudyDTO.Response(study);
     }
 
     // Read
@@ -137,14 +137,15 @@ public class StudyService {
     }
 
     // Util
-    private void saveWithImage(Study study, List<MultipartFile> images) throws IOException {
+    private void saveWithImage(Study study, List<String> images) {
         if(images != null) {
-            for(MultipartFile file : images) {
-                ImageDTO.Response image = imageService.uploadImage("study/", file);
+            for (String imagePath : images) {
+                ImageDTO.Response image = imageService.findByImagePath(imagePath);
                 study.getImages().add(image.getStoredImageName());
             }
         }
         studyRepository.saveAndFlush(study);
+        entityManager.detach(study);
         if(study.getImages() != null) {
             study.getImages().replaceAll(storedImageName -> imageService.findByStoredImageName(storedImageName).getImagePath());
         }

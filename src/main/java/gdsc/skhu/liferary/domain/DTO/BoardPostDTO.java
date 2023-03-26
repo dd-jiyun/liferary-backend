@@ -26,7 +26,7 @@ public class BoardPostDTO {
         @Schema(description = "Context", defaultValue = "Test Board Context")
         private String context;
         @Schema(description = "Image files", defaultValue = "")
-        private List<MultipartFile> images;
+        private List<String> images;
     }
 
     @Getter
@@ -60,15 +60,13 @@ public class BoardPostDTO {
             this.author = boardPost.getAuthor().getEmail();
             this.nickname = boardPost.getAuthor().getNickname();
             this.context = boardPost.getContext();
-            if (boardPost.getComments() == null) {
-                this.comments = new ArrayList<>();
-            } else {
+            this.comments = new ArrayList<>();
+            if (boardPost.getComments() != null) {
                 this.comments = boardPost.getComments().stream().map(CommentDTO.Response::new).collect(Collectors.toList());
             }
-            if (boardPost.getImages() == null) {
-                this.images = new ArrayList<>();
-            } else {
-                this.images = boardPost.getImages();
+            this.images = new ArrayList<>();
+            if (boardPost.getImages() != null) {
+                images.addAll(boardPost.getImages());
             }
             this.modifiedDate = boardPost.getModifiedDate();
         }
@@ -86,6 +84,6 @@ public class BoardPostDTO {
         @Schema(description = "Context", defaultValue = "Modified Context")
         private String context;
         @Schema(description = "Image files", defaultValue = "")
-        private List<MultipartFile> images;
+        private List<String> images;
     }
 }
